@@ -3,11 +3,22 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Permission;
 
-class PermissionController extends Controller
+class PermissionController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new middleware('permission:view permissions', only: ['index']),
+            new middleware('permission:edit permissions', only: ['edit']),
+            new middleware('permission:create permissions', only: ['create']),
+            new middleware('permission:delete permissions', only: ['destroy']),
+        ];
+    }
     // this method will show permissions page
     public function index()
     {
