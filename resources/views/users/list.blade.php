@@ -4,7 +4,9 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
           {{ __('Users') }}
         </h2>
-        {{-- <a href="#" class="bg-slate-700 text-white rounded-md px-3 py-2">Create</a> --}}
+        @can('create users')
+        <a href="{{ route('users.create') }}" class="bg-slate-700 text-white rounded-md px-3 py-2">Create</a>
+        @endcan
       </div>
   </x-slot>
 
@@ -36,7 +38,7 @@
                   <a href="{{ route('users.edit', $user->id) }}" class="bg-slate-700 text-white rounded-md px-3 py-2 hover:bg-slate-600">Edit</a>
                   @endcan
                   @can('delete users')
-                  {{-- <a href="javascript:void(0)" onclick="deleteRole({{ $user->id }})" class="bg-red-600 text-white rounded-md px-3 py-2 hover:bg-red-500">Delete</a> --}}
+                  <a href="javascript:void(0)" onclick="deleteUser({{ $user->id }})" class="bg-red-600 text-white rounded-md px-3 py-2 hover:bg-red-500">Delete</a>
                   @endcan
                 </td>
               </tr>
@@ -54,19 +56,19 @@
 
   <x-slot name="script">
   <script type="text/javascript">
-    function deleteRole(id)
+    function deleteUser(id)
     {
       if (confirm('Are you sure you want to delete ?')) {
         $.ajax({
           type: "delete",
-          url: "{{ route('roles.destroy') }}",
+          url: "{{ route('users.destroy') }}",
           data: {id:id},
           dataType: "json",
           headers: {
             'x-csrf-token' : '{{ csrf_token() }}'
           },
           success: function (response) {
-            window.location.href = "{{ route('roles.index') }}"
+            window.location.href = "{{ route('users.index') }}"
           }
         });
       }

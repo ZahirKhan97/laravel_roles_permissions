@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller implements HasMiddleware
 {
@@ -16,7 +17,7 @@ class UserController extends Controller implements HasMiddleware
         return [
             new middleware('permission:view users', only: ['index']),
             new middleware('permission:edit users', only: ['edit']),
-            // new middleware('permission:create users', only: ['create']),
+            new middleware('permission:create users', only: ['create']),
             // new middleware('permission:delete users', only: ['destroy']),
         ];
     }
@@ -37,7 +38,10 @@ class UserController extends Controller implements HasMiddleware
      */
     public function create()
     {
-        //
+        $roles = Role::orderBy('name', 'ASC')->get();
+        return view('users.create', [
+            'roles' => $roles
+        ]);
     }
 
     /**
@@ -45,7 +49,24 @@ class UserController extends Controller implements HasMiddleware
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|min:3',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:5',
+            'confirm_password' => 'required|same:password',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('users.create')->withInput()->withErrors($validator);
+        }
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        $user->syncRoles($request->role);
+        return redirect()->route('users.index')->with('success', 'User Added Successfully');
     }
 
     /**
@@ -89,8 +110,21 @@ class UserController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
-        //
+        $id = $request->id;
+        $user = User::find($id);
+        if ($user == null) {
+            session()->flash('error', 'User not found');
+            return response()->json([
+                'status' => false
+            ]);
+        }
+
+        $user->delete();
+        session()->flash('success', 'User deleted successfully');
+        return response()->json([
+            'status' => true
+        ]);
     }
 }
